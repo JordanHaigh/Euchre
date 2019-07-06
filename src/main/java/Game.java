@@ -65,7 +65,7 @@ public class Game {
             //player wants to order it up
             decisionMade = true;
             //dealer takes card and replaces worst card
-            decision = getBoundedInt(dealer.getName() + ", Please select a card to replace: \n" + dealer.handToString(), 1, 5);
+            decision = getBoundedInt(dealer.getName() + ", You Are Dealer. Please select a card to replace: \n" + dealer.handToString(), 1, 5);
             dealer.removeCard(decision - 1);
             dealer.addCard(trumpCard);
 
@@ -115,7 +115,7 @@ public class Game {
                         trump = Suit.SPADES;
                         break;
                 }
-
+                System.out.println(trump.toString() + " are trumps.");
                 //ready to play
                 break;
             }
@@ -135,8 +135,65 @@ public class Game {
     }
 
     private void playHands(){
+        System.out.println("Round commence!");
+        List<Card> cardsOnTable = new ArrayList<>();
+        Suit currentSuit = null; // it'll get updated in the first pass of the for loop
+        int decision;
+        //each person plays a card
+        for(Player player : playRotation){
+            decision = getBoundedInt(player.getName() + ", what card do you play?\n" + player.handToString(),1, player.getHandLength());
+            if(cardsOnTable.size() == 0){
+                //then we can add whatever card
+                Card firstCard = player.removeCard(decision-1);
+                cardsOnTable.add(firstCard);
+                currentSuit = firstCard.getSuit();
+            }
+            else{
+                //check what suit that the decision corresponds to
+                Suit decidedSuit = player.checkSuitOfCard(decision-1);
+                if(decidedSuit.equals(currentSuit)){
+                    //all good, add it to the table
+                    cardsOnTable.add(player.removeCard(decision-1));
+                }
+                else{
+                    //its the wrong suit, need to check if they accidentally chose the wrong card or if they dont have any suit cards to play
+                    if(!player.isValidMove(currentSuit)){
+                        //player has current suit cards but didnt play them, this is invalid
+                        int properDecision = retryCardPlay(player, currentSuit);
+                        cardsOnTable.add(player.removeCard(properDecision-1));
+                    }
+                    else{
+                        //player doesnt have any suit cards, so now they can play whatever they like
+                        cardsOnTable.add(player.removeCard(decision-1));
+                    }
+                }
+            }
 
-        System.out.println("Starting game...");
+        }
+
+        System.out.println("Round over! Here are the cards on the table..");
+        for(Card card : cardsOnTable){
+            System.out.println(card.toString());
+        }
+
+
+        System.out.println("testing..");
+
+    }
+
+    private int retryCardPlay(Player player, Suit currentSuit){
+        //eg. suit is hearts. player has a 4 heart cards and 1 club and accidentally picked the clubs card . so they need
+        //to go in here and loop till they pick a suit card.
+        int decision;
+        while(true){
+            System.out.println(player.getName()+", that card cannot be played.");
+            decision = getBoundedInt(player.getName() + ", what card do you play?\n" + player.handToString(),1, player.getHandLength());
+            Suit decidedSuit = player.checkSuitOfCard(decision-1);
+            if(decidedSuit.equals(currentSuit)){
+                //all good, add it to the table
+                return decision;
+            }
+        }
 
     }
 
