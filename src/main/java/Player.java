@@ -37,6 +37,10 @@ public class Player{
         return hand.get(index).getSuit();
     }
 
+    public Card peekCard(int index){
+        return hand.get(index);
+    }
+
     public boolean isValidMove(Suit currentSuit){
         //i have a hand of 4 heart cards and 1 club card and hearts are trumps
         //I want to play the club card

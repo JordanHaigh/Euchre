@@ -19,10 +19,6 @@ public class Deck {
         Collections.shuffle(cards);
     }
 
-    public LinkedList<Card> getCards() {
-        return cards;
-    }
-
     public Card removeCard(){
         return cards.remove();
     }

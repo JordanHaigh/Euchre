@@ -7,6 +7,7 @@ public class Game {
     private Deck cards;
     private Player dealer;
     private Suit trump;
+    private Suit leftBowerSuit;
 
     private static LinkedList<Player> playRotation = new LinkedList<>();
     private static LinkedList<Player> playRotationClone = new LinkedList<>(); //used when players are removed from linked list
@@ -37,11 +38,30 @@ public class Game {
 
         playRotationClone = playRotation;
 
-        //dealer hands cards to players
-        dealCards();
+        /**
+         //dealer hands cards to players
+         dealCards();
 
-        //Calling Round
-        callingRound();
+         //Calling Round
+
+
+         callingRound();
+         todo turn off override */
+        override();
+
+    }
+
+    public void override() {
+        Suit currentSuit = Suit.SPADES;
+        trump = Suit.CLUBS;
+        leftBowerSuit = Suit.SPADES;
+        HashMap<Card, Player> cardsPlayedByWhom = new HashMap<>();
+        cardsPlayedByWhom.put(new Card(Suit.CLUBS, "J"), team2.getPlayer1()); //Heath
+        cardsPlayedByWhom.put(new Card(Suit.SPADES, "9"), team1.getPlayer2()); //Nelly
+        cardsPlayedByWhom.put(new Card(Suit.CLUBS, "A"), team2.getPlayer2()); //Boris
+        cardsPlayedByWhom.put(new Card(Suit.SPADES, "J"), team1.getPlayer1()); //Jay
+
+        determingWinningTeam(currentSuit, cardsPlayedByWhom);
 
     }
 
@@ -71,6 +91,10 @@ public class Game {
 
             // trump is set
             trump = trumpCard.getSuit();
+            if (trump == Suit.HEARTS) leftBowerSuit = Suit.DIAMONDS;
+            else if (trump == Suit.DIAMONDS) leftBowerSuit = Suit.HEARTS;
+            else if (trump == Suit.CLUBS) leftBowerSuit = Suit.SPADES;
+            else if (trump == Suit.SPADES) leftBowerSuit = Suit.CLUBS;
 
             //does player who ordered it up want to go alone?
             decision = getBoundedInt(player.getName() + ", what is your decision? [1] Go Alone  [2] Play with Partner", 1, 2);
@@ -104,15 +128,19 @@ public class Game {
                 switch (decision) {
                     case 1:
                         trump = Suit.HEARTS;
+                        leftBowerSuit = Suit.DIAMONDS;
                         break;
                     case 2:
                         trump = Suit.DIAMONDS;
+                        leftBowerSuit = Suit.HEARTS;
                         break;
                     case 3:
                         trump = Suit.CLUBS;
+                        leftBowerSuit = Suit.SPADES;
                         break;
                     case 4:
                         trump = Suit.SPADES;
+                        leftBowerSuit = Suit.CLUBS;
                         break;
                 }
                 System.out.println(trump.toString() + " are trumps.");
@@ -121,7 +149,7 @@ public class Game {
             }
 
             //decision still not made, end round
-            if(!decisionMade){
+            if (!decisionMade) {
                 System.out.println("Round has ended. Nobody made trump");
                 printScores();
                 //start new round
@@ -134,62 +162,193 @@ public class Game {
         playHands();
     }
 
-    private void playHands(){
+    private void playHands() {
         System.out.println("Round commence!");
-        List<Card> cardsOnTable = new ArrayList<>();
+        System.out.println("Trump is " + trump);
+        //List<Card> cardsOnTable = new ArrayList<>();
         Suit currentSuit = null; // it'll get updated in the first pass of the for loop
+        HashMap<Card, Player> cardsPlayedAndByWhom = new HashMap<>();
         int decision;
         //each person plays a card
-        for(Player player : playRotation){
-            decision = getBoundedInt(player.getName() + ", what card do you play?\n" + player.handToString(),1, player.getHandLength());
-            if(cardsOnTable.size() == 0){
+        for (Player player : playRotation) {
+            decision = getBoundedInt(player.getName() + ", what card do you play?\n" + player.handToString(), 1, player.getHandLength());
+            Card card;
+            if (cardsPlayedAndByWhom.size() == 0) {
                 //then we can add whatever card
-                Card firstCard = player.removeCard(decision-1);
-                cardsOnTable.add(firstCard);
-                currentSuit = firstCard.getSuit();
-            }
-            else{
+                card = player.removeCard(decision - 1);
+                cardsPlayedAndByWhom.put(card, player);
+                currentSuit = card.getSuit();
+                System.out.println("Current Suit is " + currentSuit);
+            } else {
                 //check what suit that the decision corresponds to
-                Suit decidedSuit = player.checkSuitOfCard(decision-1);
-                if(decidedSuit.equals(currentSuit)){
+                Suit decidedSuit = player.checkSuitOfCard(decision - 1);
+                if (decidedSuit.equals(currentSuit)) {
                     //all good, add it to the table
-                    cardsOnTable.add(player.removeCard(decision-1));
-                }
-                else{
+                    card = player.removeCard(decision - 1);
+                    cardsPlayedAndByWhom.put(card, player);
+
+                } else {
                     //its the wrong suit, need to check if they accidentally chose the wrong card or if they dont have any suit cards to play
-                    if(!player.isValidMove(currentSuit)){
-                        //player has current suit cards but didnt play them, this is invalid
-                        int properDecision = retryCardPlay(player, currentSuit);
-                        cardsOnTable.add(player.removeCard(properDecision-1));
-                    }
-                    else{
+                    if (!player.isValidMove(currentSuit)) {
+                        //check if the card being played is the left bower
+                        if (leftBowerWasChosenByPlayer(player, decision)) {
+                            //valid move
+                            card = player.removeCard(decision - 1);
+                            cardsPlayedAndByWhom.put(card, player);
+                        } else {
+                            //player has current suit cards but didnt play them, this is invalid
+                            int properDecision = retryCardPlay(player, currentSuit);
+                            card = player.removeCard(properDecision - 1);
+                            cardsPlayedAndByWhom.put(card, player);
+                        }
+                    } else {
                         //player doesnt have any suit cards, so now they can play whatever they like
-                        cardsOnTable.add(player.removeCard(decision-1));
+                        card = player.removeCard(decision - 1);
+                        cardsPlayedAndByWhom.put(card, player);
+
                     }
                 }
             }
-
+            System.out.println(player.getName() + " played " + card);
         }
 
         System.out.println("Round over! Here are the cards on the table..");
-        for(Card card : cardsOnTable){
-            System.out.println(card.toString());
+        determingWinningTeam(currentSuit, cardsPlayedAndByWhom);
+    }
+
+    private boolean leftBowerWasChosenByPlayer(Player player, int decision) {
+        Card peekingCard = player.peekCard(decision - 1);
+        return peekingCard.getSuit().equals(leftBowerSuit) && peekingCard.getValue().equals("J");
+    }
+
+    private boolean bowerWasPlayedDuringRound(Suit bowerSuit, List<Card> currentSuitCardsPlayed) {
+        for (Card card : currentSuitCardsPlayed) {
+            if (card.getSuit().equals(bowerSuit) && card.getValue().equals("J")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int getIndexOfBowerInList(Suit bowerSuit, List<Card> cardList) {
+        for (int i = 0; i < cardList.size(); i++) {
+            if (cardList.get(i).getSuit().equals(bowerSuit) && cardList.get(i).getValue().equals("J")) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void determingWinningTeam(Suit currentSuit, HashMap<Card, Player> cardsPlayedAndByWhom) {
+
+        List<Card> allCards = new ArrayList<>();
+
+        for (Map.Entry<Card, Player> cardPlayerEntry : cardsPlayedAndByWhom.entrySet()) {
+            allCards.add(cardPlayerEntry.getKey());
+        }
+
+        List<Card> cardsInOrder = new ArrayList<>();
+
+        //check if right bower was played
+        if (bowerWasPlayedDuringRound(trump, allCards)) {
+            //remove from trump cards played
+            int rightBowerIndex = getIndexOfBowerInList(trump, allCards);
+            Card rightBower = allCards.remove(rightBowerIndex);
+
+            // add to p1 of list
+            cardsInOrder.add(0, rightBower);
+        }
+
+        //check if left bower was played
+        if (bowerWasPlayedDuringRound(leftBowerSuit, allCards)) {
+            //remove from current suit cards played
+            //get index of bower in list
+            int leftBowerIndex = getIndexOfBowerInList(leftBowerSuit, allCards);
+            Card leftBower = allCards.remove(leftBowerIndex);
+
+            //add to p2 of list (or p1 if right bower not played
+            if(cardsInOrder.size() == 1)
+                cardsInOrder.add(1, leftBower);
+            else
+                cardsInOrder.add(0, leftBower);
         }
 
 
-        System.out.println("testing..");
+        List<Card> trumpCardsPlayed;
 
+        //if trump is the same as the hands suit
+        if (trump == currentSuit) {
+            trumpCardsPlayed = getCardsPlayedBasedOnSuit(allCards, trump);
+
+            //sort all other trumps A,K,Q,10,9,8,7
+            String[] otherTrumpOrder = new String[]{"A", "K", "Q", "10", "9", "8", "7"};
+            for (String trumpValue : otherTrumpOrder) {
+                for (Card card : trumpCardsPlayed) {
+                    if (card.getValue().equals(trumpValue))
+                        cardsInOrder.add(card);
+                }
+            }
+
+            //and thats lunch.
+        } else {
+            //trump is different to the hand suit
+
+            //we need to add trumps and then add current suit cards
+            trumpCardsPlayed = getCardsPlayedBasedOnSuit(allCards, trump);
+
+            //sort all other trumps A,K,Q,10,9,8,7
+            String[] otherTrumpOrder = new String[]{"A", "K", "Q", "10", "9", "8", "7"};
+            for (String trumpValue : otherTrumpOrder) {
+                for (Card card : trumpCardsPlayed) {
+                    if (card.getValue().equals(trumpValue))
+                        cardsInOrder.add(card);
+                }
+            }
+
+            //get current suit cards
+            List<Card> currentSuitCardsPlayed = getCardsPlayedBasedOnSuit(allCards, currentSuit);
+            //sort other current suit cards A,K,Q,J,10,9,8,7
+            String[] currentSuitOrder = new String[]{"A", "K", "Q", "J", "10", "9", "8", "7"};
+
+            for (String suitValue : currentSuitOrder) {
+                for (Card card : currentSuitCardsPlayed) {
+                    if (card.getValue().equals(suitValue))
+                        cardsInOrder.add(card);
+                }
+            }
+        }
+
+        //other cards are duds.
+
+        //get winner
+        Player winningPlayer = cardsPlayedAndByWhom.get(cardsInOrder.get(0));
+        System.out.println(winningPlayer.getName() + " Wins the Round!");
+
+        Team winningTeam = getTeamById(winningPlayer.getTeamId());
+        winningTeam.updatePoints(1); //todo update later with winning conditions
     }
 
-    private int retryCardPlay(Player player, Suit currentSuit){
+
+    private List<Card> getCardsPlayedBasedOnSuit(List<Card> allCards, Suit suit) {
+        List<Card> cardsPlayed = new ArrayList<>();
+
+        for (Card card : allCards) {
+            if (card.getSuit().equals(suit)) {
+                cardsPlayed.add(card);
+            }
+        }
+        return cardsPlayed;
+    }
+
+    private int retryCardPlay(Player player, Suit currentSuit) {
         //eg. suit is hearts. player has a 4 heart cards and 1 club and accidentally picked the clubs card . so they need
         //to go in here and loop till they pick a suit card.
         int decision;
-        while(true){
-            System.out.println(player.getName()+", that card cannot be played.");
-            decision = getBoundedInt(player.getName() + ", what card do you play?\n" + player.handToString(),1, player.getHandLength());
-            Suit decidedSuit = player.checkSuitOfCard(decision-1);
-            if(decidedSuit.equals(currentSuit)){
+        while (true) {
+            System.out.println(player.getName() + ", that card cannot be played.");
+            decision = getBoundedInt(player.getName() + ", what card do you play?\n" + player.handToString(), 1, player.getHandLength());
+            Suit decidedSuit = player.checkSuitOfCard(decision - 1);
+            if (decidedSuit.equals(currentSuit)) {
                 //all good, add it to the table
                 return decision;
             }
@@ -223,7 +382,7 @@ public class Game {
     }
 
 
-    private void reset(){
+    private void reset() {
         dealer.isDealer = false;
         playRotation = playRotationClone; //adds any removed players back to the queue
 
@@ -234,6 +393,7 @@ public class Game {
 
         cards = new Deck();
     }
+
     private Team getTeamById(int id) {
         if (id == 1) {
             return team1;
@@ -250,7 +410,7 @@ public class Game {
 
     }
 
-    private void printScores(){
+    private void printScores() {
         System.out.println("Scores:");
         System.out.println("\t Team 1:" + team1.toString());
         System.out.println("\t Team 2:" + team2.toString());

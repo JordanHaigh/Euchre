@@ -21,6 +21,11 @@ public class Team{
         return player2;
     }
 
+    public void updatePoints(int winningPoints){
+        this.points += winningPoints;
+
+    }
+
     @Override
     public String toString() {
         return "Team{" + player1 + ", " + player2 +"} Points: " + points;
