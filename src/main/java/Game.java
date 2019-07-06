@@ -12,7 +12,7 @@ public class Game {
     private static LinkedList<Player> playRotation = new LinkedList<>();
     private static LinkedList<Player> playRotationClone = new LinkedList<>(); //used when players are removed from linked list
 
-    Scanner console = new Scanner(System.in);
+    private Scanner console = new Scanner(System.in);
 
 
     public Game(Team team1, Team team2, Deck cards) {
@@ -52,9 +52,11 @@ public class Game {
     }
 
     public void override() {
-        Suit currentSuit = Suit.SPADES;
-        trump = Suit.CLUBS;
-        leftBowerSuit = Suit.SPADES;
+        Suit currentSuit = Suit.CLUBS;
+
+        trump = Suit.DIAMONDS;
+        assignLeftBower();
+
         HashMap<Card, Player> cardsPlayedByWhom = new HashMap<>();
         cardsPlayedByWhom.put(new Card(Suit.CLUBS, "J"), team2.getPlayer1()); //Heath
         cardsPlayedByWhom.put(new Card(Suit.SPADES, "9"), team1.getPlayer2()); //Nelly
@@ -91,10 +93,7 @@ public class Game {
 
             // trump is set
             trump = trumpCard.getSuit();
-            if (trump == Suit.HEARTS) leftBowerSuit = Suit.DIAMONDS;
-            else if (trump == Suit.DIAMONDS) leftBowerSuit = Suit.HEARTS;
-            else if (trump == Suit.CLUBS) leftBowerSuit = Suit.SPADES;
-            else if (trump == Suit.SPADES) leftBowerSuit = Suit.CLUBS;
+            assignLeftBower();
 
             //does player who ordered it up want to go alone?
             decision = getBoundedInt(player.getName() + ", what is your decision? [1] Go Alone  [2] Play with Partner", 1, 2);
@@ -162,6 +161,12 @@ public class Game {
         playHands();
     }
 
+    private void assignLeftBower(){
+        if (trump == Suit.HEARTS) leftBowerSuit = Suit.DIAMONDS;
+        else if (trump == Suit.DIAMONDS) leftBowerSuit = Suit.HEARTS;
+        else if (trump == Suit.CLUBS) leftBowerSuit = Suit.SPADES;
+        else if (trump == Suit.SPADES) leftBowerSuit = Suit.CLUBS;
+    }
     private void playHands() {
         System.out.println("Round commence!");
         System.out.println("Trump is " + trump);
@@ -273,38 +278,20 @@ public class Game {
                 cardsInOrder.add(0, leftBower);
         }
 
+        //add remaining trump cards
+        List<Card> trumpCardsPlayed = getCardsPlayedBasedOnSuit(allCards, trump);
 
-        List<Card> trumpCardsPlayed;
-
-        //if trump is the same as the hands suit
-        if (trump == currentSuit) {
-            trumpCardsPlayed = getCardsPlayedBasedOnSuit(allCards, trump);
-
-            //sort all other trumps A,K,Q,10,9,8,7
-            String[] otherTrumpOrder = new String[]{"A", "K", "Q", "10", "9", "8", "7"};
-            for (String trumpValue : otherTrumpOrder) {
-                for (Card card : trumpCardsPlayed) {
-                    if (card.getValue().equals(trumpValue))
-                        cardsInOrder.add(card);
-                }
+        //sort all other trumps A,K,Q,10,9,8,7
+        String[] otherTrumpOrder = new String[]{"A", "K", "Q", "10", "9", "8", "7"};
+        for (String trumpValue : otherTrumpOrder) {
+            for (Card card : trumpCardsPlayed) {
+                if (card.getValue().equals(trumpValue))
+                    cardsInOrder.add(card);
             }
+        }
 
-            //and thats lunch.
-        } else {
-            //trump is different to the hand suit
-
-            //we need to add trumps and then add current suit cards
-            trumpCardsPlayed = getCardsPlayedBasedOnSuit(allCards, trump);
-
-            //sort all other trumps A,K,Q,10,9,8,7
-            String[] otherTrumpOrder = new String[]{"A", "K", "Q", "10", "9", "8", "7"};
-            for (String trumpValue : otherTrumpOrder) {
-                for (Card card : trumpCardsPlayed) {
-                    if (card.getValue().equals(trumpValue))
-                        cardsInOrder.add(card);
-                }
-            }
-
+        //if trump is the same as the hands suit, then we need to add the current suit cards
+        if (trump != currentSuit) {
             //get current suit cards
             List<Card> currentSuitCardsPlayed = getCardsPlayedBasedOnSuit(allCards, currentSuit);
             //sort other current suit cards A,K,Q,J,10,9,8,7
