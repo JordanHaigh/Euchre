@@ -73,11 +73,9 @@ public class Player{
     public String handToString(){
         StringBuilder sb = new StringBuilder();
         for(int i = 0; i < hand.size();i++){
-            sb.append("["+(i+1)+"]")
-                    .append("\t")
+            sb.append("["+(i+1)+"]  ")
                     .append(hand.get(i).toString())
-                    .append("\n");
-
+                    .append("\t");
         }
 
         return sb.toString();

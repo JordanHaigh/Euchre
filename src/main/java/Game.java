@@ -10,7 +10,6 @@ public class Game {
     private Suit leftBowerSuit;
 
 
-
     private static LinkedList<Player> playRotation = new LinkedList<>();
     private static LinkedList<Player> playRotationClone = new LinkedList<>(); //used when players are removed from linked list
 
@@ -40,7 +39,7 @@ public class Game {
 
         playRotationClone = playRotation;
 
-        /**
+
          //dealer hands cards to players
          dealCards();
 
@@ -48,8 +47,8 @@ public class Game {
 
 
          callingRound();
-         todo turn off override */
-        override();
+
+        //override();
 
     }
 
@@ -88,6 +87,11 @@ public class Game {
 
             //player wants to order it up
             decisionMade = true;
+
+            //assign bidding team
+            Team biddingTeam = getTeamById(player.getTeamId());
+            biddingTeam.isBiddingTeam = true;
+
             //dealer takes card and replaces worst card
             decision = getBoundedInt(dealer.getName() + ", You Are Dealer. Please select a card to replace: \n" + dealer.handToString(), 1, 5);
             dealer.removeCard(decision - 1);
@@ -105,6 +109,7 @@ public class Game {
                 int teamId = player.getTeamId();
                 Team team = getTeamById(teamId);
                 removeTeammate(team, player);
+                team.isGoingAlone = true;
 
                 //ready to play without partner
             }
@@ -145,6 +150,10 @@ public class Game {
                         break;
                 }
                 System.out.println(trump.toString() + " are trumps.");
+
+                Team biddingTeam = getTeamById(player.getTeamId());
+                biddingTeam.isBiddingTeam = true;
+
                 //ready to play
                 break;
             }
@@ -169,6 +178,7 @@ public class Game {
         else if (trump == Suit.CLUBS) leftBowerSuit = Suit.SPADES;
         else if (trump == Suit.SPADES) leftBowerSuit = Suit.CLUBS;
     }
+
     private void playHands() {
         System.out.println("Round commence!");
         System.out.println("Trump is " + trump);
@@ -184,7 +194,7 @@ public class Game {
         if(team1.getRoundPoints() > team2.getRoundPoints()){
             System.out.println("Team 1 Wins the Hand!");
             //update game points based on game conditions
-
+            team1.updateGamePoints(determinePointsToAddToGameScore(team1));
 
             //if team1 has enough points to win the game, exit
             if(teamHasEnoughPointsToWin(team1)){
@@ -196,7 +206,7 @@ public class Game {
         else{
             System.out.println("Team 2 Wins the Hand!");
             //update game points based on game conditions
-
+            team2.updateGamePoints(determinePointsToAddToGameScore(team2));
 
 
             //if team2 has enough points to win the game, exit
@@ -209,6 +219,32 @@ public class Game {
         //nobody has hit 10 points, keep playing
         reset();
         start();
+    }
+
+    private int determinePointsToAddToGameScore(Team winningTeam){
+        if(winningTeam.isBiddingTeam){
+            if(winningTeam.isGoingAlone){
+                if(winningTeam.getRoundPoints() == 3 || winningTeam.getRoundPoints() == 4)//Bidder goes alone and wins 3 or 4 tricks
+                    return 1;
+                else //Bidder goes alone and wins 5 tricks (march)
+                    return 4;
+            }
+
+            if(winningTeam.getRoundPoints() == 3 || winningTeam.getRoundPoints() == 4) //Bidding partnership (makers) wins 3 or 4 tricks
+                return 1; //1 Point
+            else if(winningTeam.getRoundPoints() == 5)//Bidding partnership (makers) wins 5 tricks (march)
+                return 2;
+
+
+        }
+        else{ //Defenders
+            if(winningTeam.isGoingAlone)//Defender goes alone and wins 3 or more tricks (regional)
+                return 4;
+            else//Defenders win 3 or more tricks (Euchred)
+                return 2;
+        }
+
+        return 10000; //Won't get here
     }
 
     private boolean teamHasEnoughPointsToWin(Team team){
@@ -228,6 +264,10 @@ public class Game {
                 card = player.removeCard(decision - 1);
                 cardsPlayedAndByWhom.put(card, player);
                 currentSuit = card.getSuit();
+
+                //if the left bower was played we need to override the current suit to be the trump suit
+                if(leftBowerChosenByPlayer(card))
+                    currentSuit = trump;
                 System.out.println("Current Suit is " + currentSuit);
             } else {
                 //check what suit that the decision corresponds to
@@ -259,19 +299,28 @@ public class Game {
                     }
                 }
             }
-            System.out.println(player.getName() + " played " + card);
+
+            System.out.println("Current Cards on the Table:");
+            for(Map.Entry<Card, Player> cardPlayerEntry : cardsPlayedAndByWhom.entrySet()){
+                System.out.println(cardPlayerEntry.getKey().toString() + " played by " + cardPlayerEntry.getValue().toString());
+            }
         }
 
         System.out.println("Round over! Here are the cards on the table..");
+        for(Map.Entry<Card, Player> cardPlayerEntry : cardsPlayedAndByWhom.entrySet()){
+            System.out.println(cardPlayerEntry.getKey().toString() + " played by " + cardPlayerEntry.getValue().toString());
+        }
         determingWinningTeam(currentSuit, cardsPlayedAndByWhom);
 
     }
 
-
-
     private boolean leftBowerWasChosenByPlayer(Player player, int decision) {
         Card peekingCard = player.peekCard(decision - 1);
-        return peekingCard.getSuit().equals(leftBowerSuit) && peekingCard.getValue().equals("J");
+        return leftBowerChosenByPlayer(peekingCard);
+    }
+
+    private boolean leftBowerChosenByPlayer(Card card){
+        return card.getSuit().equals(leftBowerSuit) && card.getValue().equals("J");
     }
 
     private boolean bowerWasPlayedDuringRound(Suit bowerSuit, List<Card> currentSuitCardsPlayed) {
@@ -430,14 +479,13 @@ public class Game {
         dealer.isDealer = false;
         playRotation = playRotationClone; //adds any removed players back to the queue
 
-        team1.getPlayer1().resetHand();
-        team1.getPlayer2().resetHand();
-        team2.getPlayer1().resetHand();
-        team2.getPlayer2().resetHand();
+        for(Player player : playRotation)
+            player.resetHand();
 
         cards = new Deck();
 
-
+        team1.resetBooleans();
+        team2.resetBooleans();
     }
 
     private Team getTeamById(int id) {

@@ -6,7 +6,8 @@ public class Team{
     private int gamePoints;
     private int roundPoints;
 
-    private boolean isBiddingTeam;
+    public boolean isBiddingTeam;
+    public boolean isGoingAlone;
 
     public Team(int id, Player player1, Player player2) {
         this.id = id;
@@ -37,10 +38,11 @@ public class Team{
         roundPoints++;
     }
 
-    public boolean isBiddingTeam(){
-        return isBiddingTeam;
-    }
+    public void resetBooleans(){
+        isBiddingTeam = false;
+        isGoingAlone = false;
 
+    }
 
     @Override
     public String toString() {
