@@ -3,14 +3,18 @@ public class Team{
     private Player player1;
     private Player player2;
 
-    private int points;
+    private int gamePoints;
+    private int roundPoints;
+
+    private boolean isBiddingTeam;
 
     public Team(int id, Player player1, Player player2) {
         this.id = id;
         this.player1 = player1;
         this.player2 = player2;
 
-        points = 0;
+        gamePoints = 0;
+        roundPoints = 0;
     }
 
     public Player getPlayer1() {
@@ -21,14 +25,26 @@ public class Team{
         return player2;
     }
 
-    public void updatePoints(int winningPoints){
-        this.points += winningPoints;
+    public int getGamePoints(){return gamePoints;}
 
+    public int getRoundPoints(){return roundPoints;}
+
+    public void updateGamePoints(int winningPoints){
+        this.gamePoints+= winningPoints;
     }
+
+    public void incrementRoundPoints(){
+        roundPoints++;
+    }
+
+    public boolean isBiddingTeam(){
+        return isBiddingTeam;
+    }
+
 
     @Override
     public String toString() {
-        return "Team{" + player1 + ", " + player2 +"} Points: " + points;
+        return "Team{" + player1 + ", " + player2 +"} GamePoints: " + gamePoints;
     }
 }
 

@@ -9,6 +9,8 @@ public class Game {
     private Suit trump;
     private Suit leftBowerSuit;
 
+
+
     private static LinkedList<Player> playRotation = new LinkedList<>();
     private static LinkedList<Player> playRotationClone = new LinkedList<>(); //used when players are removed from linked list
 
@@ -170,7 +172,50 @@ public class Game {
     private void playHands() {
         System.out.println("Round commence!");
         System.out.println("Trump is " + trump);
-        //List<Card> cardsOnTable = new ArrayList<>();
+
+        int currentRound = 0;
+        while(currentRound < 5){ //Play five hands - maybe make this prettier
+            playRound();
+            currentRound++;
+        }
+
+        System.out.println("All hands have been played!");
+
+        if(team1.getRoundPoints() > team2.getRoundPoints()){
+            System.out.println("Team 1 Wins the Hand!");
+            //update game points based on game conditions
+
+
+            //if team1 has enough points to win the game, exit
+            if(teamHasEnoughPointsToWin(team1)){
+                System.out.println("Team 1 Wins the Game!");
+                System.exit(0);
+            }
+
+        }
+        else{
+            System.out.println("Team 2 Wins the Hand!");
+            //update game points based on game conditions
+
+
+
+            //if team2 has enough points to win the game, exit
+            if(teamHasEnoughPointsToWin(team2)){
+                System.out.println("Team 2 Wins the Game!");
+                System.exit(0);
+            }
+        }
+
+        //nobody has hit 10 points, keep playing
+        reset();
+        start();
+    }
+
+    private boolean teamHasEnoughPointsToWin(Team team){
+        return team.getGamePoints() >= 10;
+    }
+
+    private void playRound(){
         Suit currentSuit = null; // it'll get updated in the first pass of the for loop
         HashMap<Card, Player> cardsPlayedAndByWhom = new HashMap<>();
         int decision;
@@ -219,7 +264,10 @@ public class Game {
 
         System.out.println("Round over! Here are the cards on the table..");
         determingWinningTeam(currentSuit, cardsPlayedAndByWhom);
+
     }
+
+
 
     private boolean leftBowerWasChosenByPlayer(Player player, int decision) {
         Card peekingCard = player.peekCard(decision - 1);
@@ -312,7 +360,8 @@ public class Game {
         System.out.println(winningPlayer.getName() + " Wins the Round!");
 
         Team winningTeam = getTeamById(winningPlayer.getTeamId());
-        winningTeam.updatePoints(1); //todo update later with winning conditions
+        winningTeam.incrementRoundPoints();
+        reassignPlayRotationBasedOnWinner(winningPlayer);
     }
 
 
@@ -359,6 +408,14 @@ public class Game {
 
     }
 
+    private void reassignPlayRotationBasedOnWinner(Player winner){
+        //whilst the winner doesnt equal the first person in the play rotation, keep removing and appending
+        while(!winner.equals(playRotation.get(0))){
+            Player p = playRotation.remove(0);
+            playRotation.add(p);
+        }
+    }
+
     private List<Card> dealHand(int numberOfCards) {
         List<Card> hand = new ArrayList<>();
 
@@ -379,6 +436,8 @@ public class Game {
         team2.getPlayer2().resetHand();
 
         cards = new Deck();
+
+
     }
 
     private Team getTeamById(int id) {
