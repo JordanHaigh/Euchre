@@ -75,85 +75,31 @@ public class Game {
         boolean decisionMade = false;
 
         for (Player player : playRotation) {
-            if(player.isBot())
-            decision = getBoundedInt(player.getName() + ", what is your decision? [1] Pass  [2] Order it Up", 1, 2);
+            if(player.isBot()){
 
-            //does player want to pass
-            if (decision == 1) {
-                continue; //next player
+
+            }
+            else{
+                decisionMade = callingRound_PlayerMakesFirstDecision(player, trumpCard);
+                if(decisionMade)
+                    break;
             }
 
-            //player wants to order it up
-            decisionMade = true;
-
-            //assign bidding team
-            Team biddingTeam = getTeamById(player.getTeamId());
-            biddingTeam.setBiddingTeam(true);
-
-            //dealer takes card and replaces worst card
-            decision = getBoundedInt(dealer.getName() + ", You Are Dealer. Please select a card to replace: \n" + dealer.handToString(), 1, 5);
-            dealer.removeCard(decision - 1);
-            dealer.addCard(trumpCard);
-
-            // trump is set
-            trump = trumpCard.getSuit();
-            assignLeftBower();
-
-            //does player who ordered it up want to go alone?
-            decision = getBoundedInt(player.getName() + ", what is your decision? [1] Go Alone  [2] Play with Partner", 1, 2);
-
-            if (decision == 1) {
-                //going alone - remove players partner from rotation
-                int teamId = player.getTeamId();
-                Team team = getTeamById(teamId);
-                removeTeammate(team, player);
-                team.setGoingAlone(true);
-
-                //ready to play without partner
-            }
-
-            //ready to play with partner
-            break;
         }
 
         if (!decisionMade) {
-            //everyone passed
-            //turn trump down
+            //everyone passed, turn trump down
             System.out.println("Trump has been turned down");
             //player starting from left can decide to make it
             for (Player player : playRotation) {
-                decision = getBoundedInt(player.getName() + ", what is your decision? [1] Pass  [2] Make Trump", 1, 2);
-                if (decision == 1)
-                    continue; //passed
+                if(player.isBot()){
 
-                //making trump
-                decisionMade = true;
-                decision = getBoundedInt(player.getName() + ", what is Trumps? [1] Hearts  [2] Diamonds  [3]Clubs  [4]Spades", 1, 4);
-                switch (decision) {
-                    case 1:
-                        trump = Suit.HEARTS;
-                        leftBowerSuit = Suit.DIAMONDS;
-                        break;
-                    case 2:
-                        trump = Suit.DIAMONDS;
-                        leftBowerSuit = Suit.HEARTS;
-                        break;
-                    case 3:
-                        trump = Suit.CLUBS;
-                        leftBowerSuit = Suit.SPADES;
-                        break;
-                    case 4:
-                        trump = Suit.SPADES;
-                        leftBowerSuit = Suit.CLUBS;
+                }
+                else{
+                    decisionMade = callingRound_PlayerMakesSecondDecision(player);
+                    if(decisionMade)
                         break;
                 }
-                System.out.println(trump.toString() + " are trumps.");
-
-                Team biddingTeam = getTeamById(player.getTeamId());
-                biddingTeam.setBiddingTeam(true);
-
-                //ready to play
-                break;
             }
 
             //decision still not made, end round
@@ -168,6 +114,84 @@ public class Game {
         }
 
         playHands();
+    }
+
+    private boolean callingRound_PlayerMakesFirstDecision(Player player, Card trumpCard){
+        int decision = getBoundedInt(player.getName() + ", what is your decision? [1] Pass  [2] Order it Up", 1, 2);
+
+        //does player want to pass
+        if (decision == 1) {
+            return false; //decision not made
+        }
+
+        //decision made
+        //player wants to order it up
+
+        //assign bidding team
+        Team biddingTeam = getTeamById(player.getTeamId());
+        biddingTeam.setBiddingTeam(true);
+
+        //dealer takes card and replaces worst card
+        decision = getBoundedInt(dealer.getName() + ", You Are Dealer. Please select a card to replace: \n" + dealer.handToString(), 1, 5);
+        dealer.removeCard(decision - 1);
+        dealer.addCard(trumpCard);
+
+        // trump is set
+        trump = trumpCard.getSuit();
+        assignLeftBower();
+
+        //does player who ordered it up want to go alone?
+        decision = getBoundedInt(player.getName() + ", what is your decision? [1] Go Alone  [2] Play with Partner", 1, 2);
+
+        if (decision == 1) {
+            //going alone - remove players partner from rotation
+            int teamId = player.getTeamId();
+            Team team = getTeamById(teamId);
+            removeTeammate(team, player);
+            team.setGoingAlone(true);
+
+            //ready to play without partner
+        }
+
+        //ready to play with partner
+        return true;
+
+    }
+
+    private boolean callingRound_PlayerMakesSecondDecision(Player player){
+        int decision = getBoundedInt(player.getName() + ", what is your decision? [1] Pass  [2] Make Trump", 1, 2);
+        if (decision == 1)
+            return false; //decision not made
+
+        //making trump
+        decision = getBoundedInt(player.getName() + ", what is Trumps? [1] Hearts  [2] Diamonds  [3]Clubs  [4]Spades", 1, 4);
+        switch (decision) {
+            case 1:
+                trump = Suit.HEARTS;
+                leftBowerSuit = Suit.DIAMONDS;
+                break;
+            case 2:
+                trump = Suit.DIAMONDS;
+                leftBowerSuit = Suit.HEARTS;
+                break;
+            case 3:
+                trump = Suit.CLUBS;
+                leftBowerSuit = Suit.SPADES;
+                break;
+            case 4:
+                trump = Suit.SPADES;
+                leftBowerSuit = Suit.CLUBS;
+                break;
+        }
+        System.out.println(trump.toString() + " are trumps.");
+
+        Team biddingTeam = getTeamById(player.getTeamId());
+        biddingTeam.setBiddingTeam(true);
+
+        //ready to play
+        return true; //decision made
+
+
     }
 
     private void assignLeftBower(){

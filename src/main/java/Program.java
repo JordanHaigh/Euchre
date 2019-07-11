@@ -1,8 +1,8 @@
 import java.util.Scanner;
 
 public class Program {
-    static Scanner console = new Scanner(System.in);
-    static Team[] teams = new Team[2];
+    private static Scanner console = new Scanner(System.in);
+    private static Team[] teams = new Team[2];
 
     public static void main(String[] args) {
 
