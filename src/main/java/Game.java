@@ -34,7 +34,7 @@ public class Game {
 
         //choose dealer
         dealer = playRotation.remove();
-        dealer.isDealer = true;
+        dealer.setDealer(true);
         playRotation.add(dealer);
 
         playRotationClone = playRotation;
@@ -44,8 +44,6 @@ public class Game {
          dealCards();
 
          //Calling Round
-
-
          callingRound();
 
         //override();
@@ -73,11 +71,11 @@ public class Game {
         System.out.println("Trump is: " + trumpCard.toString());
         //go round table starting from left of dealer
 
-        int decision;
+        int decision = 0;
         boolean decisionMade = false;
 
         for (Player player : playRotation) {
-            System.out.println();
+            if(player.isBot())
             decision = getBoundedInt(player.getName() + ", what is your decision? [1] Pass  [2] Order it Up", 1, 2);
 
             //does player want to pass
@@ -90,7 +88,7 @@ public class Game {
 
             //assign bidding team
             Team biddingTeam = getTeamById(player.getTeamId());
-            biddingTeam.isBiddingTeam = true;
+            biddingTeam.setBiddingTeam(true);
 
             //dealer takes card and replaces worst card
             decision = getBoundedInt(dealer.getName() + ", You Are Dealer. Please select a card to replace: \n" + dealer.handToString(), 1, 5);
@@ -109,7 +107,7 @@ public class Game {
                 int teamId = player.getTeamId();
                 Team team = getTeamById(teamId);
                 removeTeammate(team, player);
-                team.isGoingAlone = true;
+                team.setGoingAlone(true);
 
                 //ready to play without partner
             }
@@ -152,7 +150,7 @@ public class Game {
                 System.out.println(trump.toString() + " are trumps.");
 
                 Team biddingTeam = getTeamById(player.getTeamId());
-                biddingTeam.isBiddingTeam = true;
+                biddingTeam.setBiddingTeam(true);
 
                 //ready to play
                 break;
@@ -222,8 +220,8 @@ public class Game {
     }
 
     private int determinePointsToAddToGameScore(Team winningTeam){
-        if(winningTeam.isBiddingTeam){
-            if(winningTeam.isGoingAlone){
+        if(winningTeam.isBiddingTeam()){
+            if(winningTeam.isGoingAlone()){
                 if(winningTeam.getRoundPoints() == 3 || winningTeam.getRoundPoints() == 4)//Bidder goes alone and wins 3 or 4 tricks
                     return 1;
                 else //Bidder goes alone and wins 5 tricks (march)
@@ -238,7 +236,7 @@ public class Game {
 
         }
         else{ //Defenders
-            if(winningTeam.isGoingAlone)//Defender goes alone and wins 3 or more tricks (regional)
+            if(winningTeam.isGoingAlone())//Defender goes alone and wins 3 or more tricks (regional)
                 return 4;
             else//Defenders win 3 or more tricks (Euchred)
                 return 2;
@@ -306,10 +304,7 @@ public class Game {
             }
         }
 
-        System.out.println("Round over! Here are the cards on the table..");
-        for(Map.Entry<Card, Player> cardPlayerEntry : cardsPlayedAndByWhom.entrySet()){
-            System.out.println(cardPlayerEntry.getKey().toString() + " played by " + cardPlayerEntry.getValue().toString());
-        }
+        System.out.println("Round over!");
         determingWinningTeam(currentSuit, cardsPlayedAndByWhom);
 
     }
@@ -476,7 +471,7 @@ public class Game {
 
 
     private void reset() {
-        dealer.isDealer = false;
+        dealer.setDealer(false);
         playRotation = playRotationClone; //adds any removed players back to the queue
 
         for(Player player : playRotation)
@@ -484,8 +479,8 @@ public class Game {
 
         cards = new Deck();
 
-        team1.resetBooleans();
-        team2.resetBooleans();
+        team1.resetBooleansAndRoundPoints();
+        team2.resetBooleansAndRoundPoints();
     }
 
     private Team getTeamById(int id) {

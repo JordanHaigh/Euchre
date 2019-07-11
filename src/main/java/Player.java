@@ -8,22 +8,29 @@ public class Player{
 
     private int teamId;
     private List<Card> hand = new ArrayList<>();
-    public boolean isDealer;
+
+    private boolean isDealer;
+    private boolean isBot;
 
 
 
-    public Player(String name, int teamId) {
+    public Player(String name, int teamId, boolean isBot) {
         this.name = name;
         this.teamId = teamId;
+        this.isBot = isBot;
     }
 
-    public int getTeamId() {
-        return teamId;
-    }
+    public int getTeamId() { return teamId; }
 
-    public String getName() {
-        return name;
-    }
+    public String getName() { return name; }
+
+    public boolean isDealer() { return isDealer; }
+
+    public void setDealer(boolean dealer) { isDealer = dealer; }
+
+    public boolean isBot() { return isBot; }
+
+    public void setBot(boolean bot) { isBot = bot; }
 
     public void addCard(Card card){
         this.hand.add(card);
@@ -73,7 +80,7 @@ public class Player{
     public String handToString(){
         StringBuilder sb = new StringBuilder();
         for(int i = 0; i < hand.size();i++){
-            sb.append("["+(i+1)+"]  ")
+            sb.append("["+(i+1)+"] ")
                     .append(hand.get(i).toString())
                     .append("\t");
         }
