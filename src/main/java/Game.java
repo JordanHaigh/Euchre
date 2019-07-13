@@ -37,11 +37,19 @@ public class Game {
         dealer.setDealer(true);
         playRotation.add(dealer);
 
-        playRotationClone = playRotation;
-
+        playRotationClone = new LinkedList<>();
+        for(Player p : playRotation){
+            playRotationClone.add(p); //fixes shallow copy
+        }
 
          //dealer hands cards to players
          dealCards();
+
+         for(Player p : playRotation){
+             System.out.println(p.getName() + "'s Hand: " + p.handToString());
+         }
+
+        System.out.println(dealer.getName() + " deals the cards.");
 
          //Calling Round
          callingRound();
@@ -67,8 +75,8 @@ public class Game {
     }
 
     private void callingRound() {
-        Card trumpCard = cards.removeCard();
-        System.out.println("Trump is: " + trumpCard.toString());
+        Card callingCard = cards.removeCard();
+        System.out.println("Calling Card is: " + callingCard.toString());
         //go round table starting from left of dealer
 
         int decision = 0;
@@ -80,7 +88,7 @@ public class Game {
 
             }
             else{
-                decisionMade = callingRound_PlayerMakesFirstDecision(player, trumpCard);
+                decisionMade = callingRound_PlayerMakesFirstDecision(player, callingCard);
                 if(decisionMade)
                     break;
             }
@@ -89,7 +97,7 @@ public class Game {
 
         if (!decisionMade) {
             //everyone passed, turn trump down
-            System.out.println("Trump has been turned down");
+            System.out.println("Calling Card has been turned down");
             //player starting from left can decide to make it
             for (Player player : playRotation) {
                 if(player.isBot()){
@@ -215,20 +223,25 @@ public class Game {
 
         if(team1.getRoundPoints() > team2.getRoundPoints()){
             System.out.println("Team 1 Wins the Hand!");
+
+            int pointsToAdd = determinePointsToAddToGameScore(team1);
+
             //update game points based on game conditions
-            team1.updateGamePoints(determinePointsToAddToGameScore(team1));
+            team1.updateGamePoints(pointsToAdd);
+            System.out.println("Team 1 gains " + pointsToAdd + " points");
 
             //if team1 has enough points to win the game, exit
             if(teamHasEnoughPointsToWin(team1)){
                 System.out.println("Team 1 Wins the Game!");
                 System.exit(0);
             }
-
         }
         else{
             System.out.println("Team 2 Wins the Hand!");
+            int pointsToAdd = determinePointsToAddToGameScore(team2);
             //update game points based on game conditions
-            team2.updateGamePoints(determinePointsToAddToGameScore(team2));
+            team2.updateGamePoints(pointsToAdd);
+            System.out.println("Team 2 gains " + pointsToAdd + " points");
 
 
             //if team2 has enough points to win the game, exit
@@ -239,6 +252,11 @@ public class Game {
         }
 
         //nobody has hit 10 points, keep playing
+
+        System.out.println("Current Scores: ");
+        System.out.println("Team 1: " + team1.getGamePoints());
+        System.out.println("Team 2: " + team2.getGamePoints());
+
         reset();
         start();
     }
@@ -496,10 +514,14 @@ public class Game {
 
     private void reset() {
         dealer.setDealer(false);
-        playRotation = playRotationClone; //adds any removed players back to the queue
 
         for(Player player : playRotation)
             player.resetHand();
+
+        playRotation = new LinkedList<>();
+        for(Player p : playRotationClone){
+            playRotation.add(p);  //fixes shallow copy - adds any removed players back to queue
+        }
 
         cards = new Deck();
 
