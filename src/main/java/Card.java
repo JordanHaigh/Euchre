@@ -1,3 +1,5 @@
+import java.util.Objects;
+
 public class Card {
 
     private Suit suit;
@@ -16,11 +18,19 @@ public class Card {
         return suit;
     }
 
+    public Suit determineAlternateSuit(){
+        return Suit.alternateSuit(suit);
+    }
+
     @Override
     public String toString() {
         return "{" + suit + ", " + value + '}';
     }
 
+    public boolean equals(Suit suit, String value){
+        return this.suit.equals(suit) && this.value.equals(value);
+
+    }
 
 }
 

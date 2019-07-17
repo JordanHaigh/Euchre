@@ -26,11 +26,11 @@ public class Program {
 
         teams[0] = new Team(1,
                 new Player(console.next(), 1, false),
-                new Player("COM1", 1, true)
+                new Player("COM2", 1, true)
         );
 
         teams[1] = new Team(2,
-                new Player("COM2", 2, false),
+                new Player("COM1", 2, true),
                 new Player("COM3", 2, true)
         );
 

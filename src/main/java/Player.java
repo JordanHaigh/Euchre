@@ -11,6 +11,7 @@ public class Player{
 
     private boolean isDealer;
     private boolean isBot;
+    private int handStrength;
 
 
 
@@ -31,6 +32,8 @@ public class Player{
     public boolean isBot() { return isBot; }
 
     public void setBot(boolean bot) { isBot = bot; }
+
+    public int getHandStrength(){return handStrength; }
 
     public void addCard(Card card){
         this.hand.add(card);
@@ -86,6 +89,57 @@ public class Player{
         }
 
         return sb.toString();
+    }
+
+    public int calculateHandStrength(Suit trump, Suit leftBowerSuit){
+        //best hand is 17 points
+        // right bower +4
+        // left bower  +4
+        // trump ace   +3
+        // trump king  +3
+        // trump queen +3
+        handStrength = 0;
+
+        for(Card card : hand){
+            if(card.equals(trump, "J") || card.equals(leftBowerSuit, "J")) //bowers +4
+                handStrength += 4;
+            else if(card.equals(trump,"A") || card.equals(trump,"K") || card.equals(trump,"Q")) //trump royals and ace +3
+                handStrength += 3;
+            else if(card.equals(trump, "10") || card.equals(trump, "9") ||card.equals(trump, "8") || card.equals(trump, "7")) //trump numbers +2
+                handStrength += 2;
+            else if(card.getValue().equals("A") || card.getValue().equals("K") || card.getValue().equals("Q") || card.getValue().equals("J")) //non trump royals and ace +2
+                handStrength += 2;
+            else
+                handStrength += 1; //non trump numbers +1
+
+        }
+
+        return handStrength;
+    }
+
+    public Suit findBestSuitForHandStrength(Suit suitTurnedDown){
+        int bestHandStrength = 0;
+        Suit bestSuit = null;
+        //iterate over all suits except the one we turned down and find the best hand strength
+        for (Suit suit : Suit.values()) {
+            if(suit.equals(suitTurnedDown)) //Don't calculate hand strength for the suit we just turned down
+                continue;
+
+            Suit leftBowerSuit = Suit.alternateSuit(suit);
+            int newHandStrength = calculateHandStrength(suit, leftBowerSuit);
+
+            if(bestHandStrength < newHandStrength){
+                bestHandStrength = newHandStrength;
+                bestSuit = suit;
+            }
+        }
+
+        if(bestHandStrength > 13)
+            return bestSuit;
+        else
+            return null; //if the hand strength is still too low, return null and that will indicate a pass
+
+
     }
 
     @Override
