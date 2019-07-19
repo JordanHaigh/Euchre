@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 public class Player{
 
@@ -11,8 +12,9 @@ public class Player{
 
     private boolean isDealer;
     private boolean isBot;
-    private int handStrength;
 
+
+    private int handStrength;
 
 
     public Player(String name, int teamId, boolean isBot) {
@@ -33,7 +35,7 @@ public class Player{
 
     public void setBot(boolean bot) { isBot = bot; }
 
-    public int getHandStrength(){return handStrength; }
+    public int getHandStrength() { return handStrength; }
 
     public void addCard(Card card){
         this.hand.add(card);
@@ -41,6 +43,13 @@ public class Player{
 
     public Card removeCard(int index){
         return hand.remove(index);
+    }
+
+    public void removeCard(Card cardToRemove){
+        if(!hand.contains(cardToRemove))
+            throw new NoSuchElementException("Card not found in " + name + "'s Hand.");
+        else
+            hand.remove(cardToRemove);
     }
 
     public Suit checkSuitOfCard(int index){
@@ -91,7 +100,7 @@ public class Player{
         return sb.toString();
     }
 
-    public int calculateHandStrength(Suit trump, Suit leftBowerSuit){
+    public int calculateHandStrength(Suit trump){
         //best hand is 17 points
         // right bower +4
         // left bower  +4
@@ -101,17 +110,7 @@ public class Player{
         handStrength = 0;
 
         for(Card card : hand){
-            if(card.equals(trump, "J") || card.equals(leftBowerSuit, "J")) //bowers +4
-                handStrength += 4;
-            else if(card.equals(trump,"A") || card.equals(trump,"K") || card.equals(trump,"Q")) //trump royals and ace +3
-                handStrength += 3;
-            else if(card.equals(trump, "10") || card.equals(trump, "9") ||card.equals(trump, "8") || card.equals(trump, "7")) //trump numbers +2
-                handStrength += 2;
-            else if(card.getValue().equals("A") || card.getValue().equals("K") || card.getValue().equals("Q") || card.getValue().equals("J")) //non trump royals and ace +2
-                handStrength += 2;
-            else
-                handStrength += 1; //non trump numbers +1
-
+            handStrength += card.calculateCardStrength(trump);
         }
 
         return handStrength;
@@ -125,8 +124,7 @@ public class Player{
             if(suit.equals(suitTurnedDown)) //Don't calculate hand strength for the suit we just turned down
                 continue;
 
-            Suit leftBowerSuit = Suit.alternateSuit(suit);
-            int newHandStrength = calculateHandStrength(suit, leftBowerSuit);
+            int newHandStrength = calculateHandStrength(suit);
 
             if(bestHandStrength < newHandStrength){
                 bestHandStrength = newHandStrength;
@@ -139,6 +137,18 @@ public class Player{
         else
             return null; //if the hand strength is still too low, return null and that will indicate a pass
 
+
+    }
+
+    public Card determineWeakestCard(Suit trump){
+        Card weakestCard = hand.get(0);
+
+        for(Card card : hand){
+            if(card.compareTo(weakestCard, trump) < 0)
+                weakestCard = card;
+        }
+
+        return weakestCard;
 
     }
 

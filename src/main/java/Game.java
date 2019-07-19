@@ -9,6 +9,8 @@ public class Game {
     private Suit trump;
     private Suit leftBowerSuit;
 
+    private final static int ORDERUPSTRENGTH = 11;
+    private final static int GOALONESTRENGTH = 13;
 
     private static LinkedList<Player> playRotation = new LinkedList<>();
     private static LinkedList<Player> playRotationClone = new LinkedList<>(); //used when players are removed from linked list
@@ -76,7 +78,7 @@ public class Game {
         }
         ////////////////////Second Round round of decisions ///////////////////////
         if (!decisionMade) {
-            //everyone passed, turn trump down
+            //everyone passed, turn calling card down
             System.out.println("Calling Card has been turned down");
             //player starting from left can decide to make it
             for (Player player : playRotation) {
@@ -84,7 +86,7 @@ public class Game {
                     decisionMade = callingRound_BotMakesSecondDecision(player, callingCard);
 
                 else
-                    decisionMade = callingRound_PlayerMakesSecondDecision(player);
+                    decisionMade = callingRound_PlayerMakesSecondDecision(player, callingCard);
 
 
                 if(decisionMade)
@@ -107,8 +109,8 @@ public class Game {
 
     private boolean callingRound_BotMakesFirstDecision(Player player, Card callingCard){
 
-        int handStrength = player.calculateHandStrength(callingCard.getSuit(), callingCard.determineAlternateSuit()); //best hand is 17 points
-        if(handStrength >= 11) {
+        int handStrength = player.calculateHandStrength(callingCard.getSuit()); //best hand is 17 points
+        if(handStrength >= ORDERUPSTRENGTH) {
             //confident hand strength to order it up
             System.out.println(player.getName() + " wants to order it up!");
             callingRound_orderUp(player, callingCard);
@@ -142,14 +144,22 @@ public class Game {
         Team biddingTeam = getTeamById(player.getTeamId());
         biddingTeam.setBiddingTeam(true);
 
-        //dealer takes card and replaces worst card
-        int decision = getBoundedInt(dealer.getName() + ", You Are Dealer. Please select a card to replace: \n" + dealer.handToString(), 1, 5);
-        dealer.removeCard(decision - 1);
-        dealer.addCard(trumpCard);
-
         // trump is set
         trump = trumpCard.getSuit();
         assignLeftBower();
+
+        //dealer takes card and replaces worst card
+        if(dealer.isBot()){
+            Card cardToRemove = dealer.determineWeakestCard(trump);
+            dealer.removeCard(cardToRemove);
+            System.out.println(dealer.getName() + " removed " + cardToRemove.toString() + ".");
+        }
+        else{
+            int decision = getBoundedInt(dealer.getName() + ", You Are Dealer. Please select a card to replace: \n" + dealer.handToString(), 1, 5);
+            dealer.removeCard(decision - 1);
+        }
+
+        dealer.addCard(trumpCard);
 
         //does player who ordered it up want to go alone?
         if(player.isBot()){
@@ -164,7 +174,7 @@ public class Game {
 
     private void callingRound_BotDecidesToGoAlone(Player player){
         int handStrength = player.getHandStrength();
-        if(handStrength > 13){ //high chance of winning
+        if(handStrength >= GOALONESTRENGTH){ //high chance of winning
             //Bot decides to go alone
             System.out.println(player.getName() + " wants to go alone!");
             int teamId = player.getTeamId();
@@ -199,6 +209,7 @@ public class Game {
         if(bestSuitForHand != null){
             //found a suit to call trump
             trump = bestSuitForHand;
+            assignLeftBower();
             System.out.println(player.getName() + " has decided to make trumps!");
             return true; //decision made
         }
@@ -209,28 +220,13 @@ public class Game {
 
     }
 
-    private boolean callingRound_PlayerMakesSecondDecision(Player player){
+    private boolean callingRound_PlayerMakesSecondDecision(Player player, Card callingCard){
         int decision = getBoundedInt(player.getName() + ", what is your decision? [1] Pass  [2] Make Trump", 1, 2);
         if (decision == 1)
             return false; //decision not made
 
         //making trump
-        decision = getBoundedInt(player.getName() + ", what is Trumps? [1] Hearts  [2] Diamonds  [3]Clubs  [4]Spades", 1, 4);
-        switch (decision) {
-            case 1:
-                trump = Suit.HEARTS;
-                break;
-            case 2:
-                trump = Suit.DIAMONDS;
-                break;
-            case 3:
-                trump = Suit.CLUBS;
-                break;
-            case 4:
-                trump = Suit.SPADES;
-                break;
-        }
-        assignLeftBower();
+        callingRound_AssignNewTrump(player, callingCard.getSuit());
 
 
         System.out.println(trump.toString() + " are trumps.");
@@ -242,6 +238,28 @@ public class Game {
         return true; //decision made
 
 
+    }
+
+    private void callingRound_AssignNewTrump(Player player, Suit suitTurnedDown){
+        int decisionNumber = 1;
+
+        //Build Decision String
+        String message = player.getName()+ ", what is Trumps? ";
+
+        List<Suit> suitsToChooseFrom = new ArrayList<>();
+        for(Suit suit : Suit.values()){
+            if(suit.equals(suitTurnedDown))
+                continue;
+
+            suitsToChooseFrom.add(suit);
+
+            message += "[" + decisionNumber++ + "] " + suit.toString() + "  ";
+        }
+
+        int decision = getBoundedInt(message, 1, 3);
+
+        trump = suitsToChooseFrom.get(decision-1);
+        assignLeftBower();
     }
 
     private void assignLeftBower(){
