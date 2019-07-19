@@ -18,6 +18,8 @@ public class Team{
         roundPoints = 0;
     }
 
+    public int getId() {return id;}
+
     public Player getPlayer1() {
         return player1;
     }

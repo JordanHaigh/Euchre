@@ -145,8 +145,7 @@ public class Game {
         biddingTeam.setBiddingTeam(true);
 
         // trump is set
-        trump = trumpCard.getSuit();
-        assignLeftBower();
+        assignTrumpAndLeftBowerSuit(trumpCard.getSuit());
 
         //dealer takes card and replaces worst card
         if(dealer.isBot()){
@@ -208,8 +207,7 @@ public class Game {
         Suit bestSuitForHand = player.findBestSuitForHandStrength(callingCard.getSuit());
         if(bestSuitForHand != null){
             //found a suit to call trump
-            trump = bestSuitForHand;
-            assignLeftBower();
+            assignTrumpAndLeftBowerSuit(bestSuitForHand);
             System.out.println(player.getName() + " has decided to make trumps!");
             return true; //decision made
         }
@@ -258,8 +256,7 @@ public class Game {
 
         int decision = getBoundedInt(message, 1, 3);
 
-        trump = suitsToChooseFrom.get(decision-1);
-        assignLeftBower();
+        assignTrumpAndLeftBowerSuit(suitsToChooseFrom.get(decision-1));
     }
 
     private void assignLeftBower(){
@@ -279,43 +276,34 @@ public class Game {
         System.out.println("All hands have been played!");
 
         if(team1.getRoundPoints() > team2.getRoundPoints()){
-            System.out.println("Team 1 Wins the Hand!");
-
-            int pointsToAdd = determinePointsToAddToGameScore(team1);
-
-            //update game points based on game conditions
-            team1.updateGamePoints(pointsToAdd);
-            System.out.println("Team 1 gains " + pointsToAdd + " points");
-
-            //if team1 has enough points to win the game, exit
-            if(teamHasEnoughPointsToWin(team1)){
-                System.out.println("Team 1 Wins the Game!");
-                System.exit(0);
-            }
+           printAndUpdateWinningTeam(team1);
         }
         else{
-            System.out.println("Team 2 Wins the Hand!");
-            int pointsToAdd = determinePointsToAddToGameScore(team2);
-            //update game points based on game conditions
-            team2.updateGamePoints(pointsToAdd);
-            System.out.println("Team 2 gains " + pointsToAdd + " points");
-
-
-            //if team2 has enough points to win the game, exit
-            if(teamHasEnoughPointsToWin(team2)){
-                System.out.println("Team 2 Wins the Game!");
-                System.exit(0);
-            }
+            printAndUpdateWinningTeam(team2);
         }
 
         //nobody has hit 10 points, keep playing
-
         System.out.println("Current Scores: ");
         System.out.println("Team 1: " + team1.getGamePoints());
         System.out.println("Team 2: " + team2.getGamePoints());
 
         reset();
         start();
+    }
+
+    private void printAndUpdateWinningTeam(Team winningTeam){
+        System.out.println("Team "+ winningTeam.getId() +" Wins the Hand!");
+        int pointsToAdd = determinePointsToAddToGameScore(winningTeam);
+        //update game points based on game conditions
+        winningTeam.updateGamePoints(pointsToAdd);
+        System.out.println("Team "+ winningTeam.getId() +" gains " + pointsToAdd + " points");
+
+        //if winning team has enough points to win the game, exit
+        if(teamHasEnoughPointsToWin(winningTeam)){
+            System.out.println("Team "+ winningTeam.getId()+ " Wins the Game!");
+            System.exit(0);
+        }
+
     }
 
     private int determinePointsToAddToGameScore(Team winningTeam){
@@ -462,11 +450,8 @@ public class Game {
             int leftBowerIndex = getIndexOfBowerInList(leftBowerSuit, allCards);
             Card leftBower = allCards.remove(leftBowerIndex);
 
-            //add to p2 of list (or p1 if right bower not played
-            if(cardsInOrder.size() == 1)
-                cardsInOrder.add(1, leftBower);
-            else
-                cardsInOrder.add(0, leftBower);
+            //add to p1/p2 of list
+            cardsInOrder.add(leftBower);
         }
 
         //add remaining trump cards
@@ -600,6 +585,11 @@ public class Game {
             playRotation.remove(team.getPlayer1());
         }
 
+    }
+
+    private void assignTrumpAndLeftBowerSuit(Suit trump){
+        this.trump = trump;
+        assignLeftBower();
     }
 
     private void printScores() {
