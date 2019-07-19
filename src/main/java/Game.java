@@ -283,9 +283,7 @@ public class Game {
         }
 
         //nobody has hit 10 points, keep playing
-        System.out.println("Current Scores: ");
-        System.out.println("Team 1: " + team1.getGamePoints());
-        System.out.println("Team 2: " + team2.getGamePoints());
+        printScores();
 
         reset();
         start();
@@ -423,8 +421,7 @@ public class Game {
         return -1;
     }
 
-    private void determingWinningTeam(Suit currentSuit, HashMap<Card, Player> cardsPlayedAndByWhom) {
-
+    private Player determineLeadingPlayer(Suit currentSuit, HashMap<Card, Player> cardsPlayedAndByWhom){
         List<Card> allCards = new ArrayList<>();
 
         for (Map.Entry<Card, Player> cardPlayerEntry : cardsPlayedAndByWhom.entrySet()) {
@@ -483,8 +480,15 @@ public class Game {
 
         //other cards are duds.
 
+        //winning player will be the person who has the first position in the CardsInOrder list
+        //the hashmap can associate the winning card with the player
+
+        return cardsPlayedAndByWhom.get(cardsInOrder.get(0));
+    }
+
+    private void determingWinningTeam(Suit currentSuit, HashMap<Card, Player> cardsPlayedAndByWhom) {
         //get winner
-        Player winningPlayer = cardsPlayedAndByWhom.get(cardsInOrder.get(0));
+        Player winningPlayer = determineLeadingPlayer(currentSuit, cardsPlayedAndByWhom);
         System.out.println(winningPlayer.getName() + " Wins the Round!");
 
         Team winningTeam = getTeamById(winningPlayer.getTeamId());
@@ -593,9 +597,9 @@ public class Game {
     }
 
     private void printScores() {
-        System.out.println("Scores:");
-        System.out.println("\t Team 1:" + team1.toString());
-        System.out.println("\t Team 2:" + team2.toString());
+        System.out.println("Current Scores: ");
+        System.out.println("\t Team 1: " + team1.getGamePoints());
+        System.out.println("\t Team 2: " + team2.getGamePoints());
     }
 
     private int getBoundedInt(String message, int lowerBound, int upperBound) {
