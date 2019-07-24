@@ -74,12 +74,12 @@ public class Card {
 
             //the following order is going to place preference on non trump royals over trump numbers.
             //this might need to be tweaked?
-            return compareCardsBasedOnValue(new String[]{"A","K","Q","J","10","9","8","7"}, otherCard);
+            return compareCardsBasedOnValue(new String[]{"7","8","9","10","J","Q","K","A"}, otherCard);
 
         }
         else if(thisCardsStrength == 3){
             //both cards are royal trumps
-            return compareCardsBasedOnValue(new String[]{"A","K","Q"}, otherCard);
+            return compareCardsBasedOnValue(new String[]{"Q","K","A"}, otherCard);
 
         }
         else{ //Card strength is 4

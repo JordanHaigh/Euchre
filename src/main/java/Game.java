@@ -1,3 +1,4 @@
+import java.lang.reflect.Array;
 import java.util.*;
 
 public class Game {
@@ -107,17 +108,17 @@ public class Game {
         playHands();
     }
 
-    private boolean callingRound_BotMakesFirstDecision(Player player, Card callingCard){
+    private boolean callingRound_BotMakesFirstDecision(Player bot, Card callingCard){
 
-        int handStrength = player.calculateHandStrength(callingCard.getSuit()); //best hand is 17 points
+        int handStrength = bot.calculateHandStrength(callingCard.getSuit()); //best hand is 17 points
         if(handStrength >= ORDERUPSTRENGTH) {
             //confident hand strength to order it up
-            System.out.println(player.getName() + " wants to order it up!");
-            callingRound_orderUp(player, callingCard);
+            System.out.println(bot.getName() + " wants to order it up!");
+            callingRound_orderUp(bot, callingCard);
             return true;
         }
         //bot doesnt have a strong hand and passes
-        System.out.println(player + " passes.");
+        System.out.println(bot + " passes.");
         return false;
 
     }
@@ -171,20 +172,20 @@ public class Game {
         //ready to play
     }
 
-    private void callingRound_BotDecidesToGoAlone(Player player){
-        int handStrength = player.getHandStrength();
+    private void callingRound_BotDecidesToGoAlone(Player bot){
+        int handStrength = bot.getHandStrength();
         if(handStrength >= GOALONESTRENGTH){ //high chance of winning
             //Bot decides to go alone
-            System.out.println(player.getName() + " wants to go alone!");
-            int teamId = player.getTeamId();
+            System.out.println(bot.getName() + " wants to go alone!");
+            int teamId = bot.getTeamId();
             Team team = getTeamById(teamId);
-            removeTeammate(team, player);
+            removeTeammate(team, bot);
             team.setGoingAlone(true);
 
             //ready to play without partner
         }
         else
-            System.out.println(player.getName() + " will play with their partner.");
+            System.out.println(bot.getName() + " will play with their partner.");
 
     }
 
@@ -202,17 +203,17 @@ public class Game {
         }
     }
 
-    private boolean callingRound_BotMakesSecondDecision(Player player, Card callingCard){
+    private boolean callingRound_BotMakesSecondDecision(Player bot, Card callingCard){
         //go through all suits but the suit missed, and find best hand strength, if strength > 13, that person makes it
-        Suit bestSuitForHand = player.findBestSuitForHandStrength(callingCard.getSuit());
+        Suit bestSuitForHand = bot.findBestSuitForHandStrength(callingCard.getSuit());
         if(bestSuitForHand != null){
             //found a suit to call trump
             assignTrumpAndLeftBowerSuit(bestSuitForHand);
-            System.out.println(player.getName() + " has decided to make trumps!");
+            System.out.println(bot.getName() + " has decided to make trumps!");
             return true; //decision made
         }
         else{
-            System.out.println(player.getName() + " has passed again.");
+            System.out.println(bot.getName() + " has passed again.");
             return false; //bot doesnt make a decision and passes
         }
 
@@ -337,14 +338,21 @@ public class Game {
     private void playRound(){
         Suit currentSuit = null; // it'll get updated in the first pass of the for loop
         HashMap<Card, Player> cardsPlayedAndByWhom = new HashMap<>();
-        int decision;
+        int decision = 0;
+        Card card;
         //each person plays a card
         for (Player player : playRotation) {
-            decision = getBoundedInt(player.getName() + ", what card do you play?\n" + player.handToString(), 1, player.getHandLength());
-            Card card;
+            if(player.isBot()){
+                card = playRound_botMakesDecision(player, currentSuit, cardsPlayedAndByWhom);
+            }
+            else{
+                decision = getBoundedInt(player.getName() + ", what card do you play?\n" + player.handToString(),1, player.getHandLength());
+                card = player.removeCard(decision - 1);
+            }
+
+
             if (cardsPlayedAndByWhom.size() == 0) {
                 //then we can add whatever card
-                card = player.removeCard(decision - 1);
                 cardsPlayedAndByWhom.put(card, player);
                 currentSuit = card.getSuit();
 
@@ -354,10 +362,9 @@ public class Game {
                 System.out.println("Current Suit is " + currentSuit);
             } else {
                 //check what suit that the decision corresponds to
-                Suit decidedSuit = player.checkSuitOfCard(decision - 1);
+                Suit decidedSuit = card.getSuit();
                 if (decidedSuit.equals(currentSuit)) {
                     //all good, add it to the table
-                    card = player.removeCard(decision - 1);
                     cardsPlayedAndByWhom.put(card, player);
 
                 } else {
@@ -366,19 +373,19 @@ public class Game {
                         //check if the card being played is the left bower
                         if (leftBowerWasChosenByPlayer(player, decision)) {
                             //valid move
-                            card = player.removeCard(decision - 1);
                             cardsPlayedAndByWhom.put(card, player);
                         } else {
                             //player has current suit cards but didnt play them, this is invalid
+                            //readd card back to hand
+                            player.addCard(decision-1, card);
+
                             int properDecision = retryCardPlay(player, currentSuit);
                             card = player.removeCard(properDecision - 1);
                             cardsPlayedAndByWhom.put(card, player);
                         }
                     } else {
                         //player doesnt have any suit cards, so now they can play whatever they like
-                        card = player.removeCard(decision - 1);
                         cardsPlayedAndByWhom.put(card, player);
-
                     }
                 }
             }
@@ -393,6 +400,74 @@ public class Game {
         determingWinningTeam(currentSuit, cardsPlayedAndByWhom);
 
     }
+
+    private Card playRound_botMakesDecision(Player bot, Suit currentSuit, HashMap<Card, Player> cardsPlayedAndByWhom){
+        //bot needs to make a decision
+
+        List<Card> availableCards = buildAvailableCardsAccordingToCurrentSuit(bot.getHand(), currentSuit);
+        availableCards = sortCardsBasedOnStrength(availableCards);
+
+
+        //is the hash map empty? we can start strong
+        if(cardsPlayedAndByWhom.isEmpty()){
+            //but not right bower strong
+
+
+        }
+
+        //if the hash map is not empty
+        //who is currently leading?
+
+        //if our team is currently leading, we can play a weak card according to the current suit
+        //if we are losing
+            //do we have a card that could gain us the lead?
+            //if not play a weak card according to current suit
+
+        return null;
+    }
+
+    private List<Card> sortCardsBasedOnStrength(List<Card> cards){
+        Card[] array = new Card[cards.size()];
+        array = cards.toArray(array);
+
+        //insertion sort thanks wikipedia
+        //i'll figure out a list implementation when i want mum jeez
+        int i = 1;
+        while(i < array.length){
+            int j = i;
+            while(j > 0 && array[j-1].compareTo(array[j], trump) > 0){
+                Card temp = array[j];
+                array[j] = array[j-1];
+                array[j-1] = temp;
+
+                j--;
+            }
+            i++;
+        }
+
+        return new ArrayList<>(Arrays.asList(array)); //return the array as a list
+    }
+
+    private List<Card> buildAvailableCardsAccordingToCurrentSuit(List<Card> hand, Suit currentSuit){
+
+        if(currentSuit == null)
+            return new ArrayList<>(hand); //player can play any card because current suit has not been set yet
+
+        List<Card> availableCards = new ArrayList<>();
+
+        for(Card card : hand){
+            if(card.getSuit().equals(currentSuit))
+                availableCards.add(card);
+        }
+
+        //if there are no available cards to play in the current suit
+        // then that means the player can play any suit
+        if(availableCards.size() == 0)
+            return new ArrayList<>(hand); //deep copy
+        else
+            return availableCards; //otherwise they have a selection of cards to choose from.
+    }
+
 
     private boolean leftBowerWasChosenByPlayer(Player player, int decision) {
         Card peekingCard = player.peekCard(decision - 1);
@@ -515,8 +590,9 @@ public class Game {
         while (true) {
             System.out.println(player.getName() + ", that card cannot be played.");
             decision = getBoundedInt(player.getName() + ", what card do you play?\n" + player.handToString(), 1, player.getHandLength());
-            Suit decidedSuit = player.checkSuitOfCard(decision - 1);
-            if (decidedSuit.equals(currentSuit)) {
+
+            Card decidedCard = player.getCard(decision - 1);
+            if (decidedCard.getSuit().equals(currentSuit)) {
                 //all good, add it to the table
                 return decision;
             }

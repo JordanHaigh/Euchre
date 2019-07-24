@@ -1,3 +1,4 @@
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -27,6 +28,8 @@ public class Player{
 
     public String getName() { return name; }
 
+    public List<Card> getHand() { return hand; }
+
     public boolean isDealer() { return isDealer; }
 
     public void setDealer(boolean dealer) { isDealer = dealer; }
@@ -41,6 +44,10 @@ public class Player{
         this.hand.add(card);
     }
 
+    public void addCard(int index, Card card){ this.hand.add(index, card); }
+
+    public Card getCard(int index){ return hand.get(index);}
+
     public Card removeCard(int index){
         return hand.remove(index);
     }
@@ -50,10 +57,6 @@ public class Player{
             throw new NoSuchElementException("Card not found in " + name + "'s Hand.");
         else
             hand.remove(cardToRemove);
-    }
-
-    public Suit checkSuitOfCard(int index){
-        return hand.get(index).getSuit();
     }
 
     public Card peekCard(int index){
@@ -149,12 +152,23 @@ public class Player{
         }
 
         return weakestCard;
+    }
 
+    public Card determineStrongestCard(Suit trump){
+        Card strongestCard = hand.get(0);
+
+        for(Card card : hand){
+            if(card.compareTo(strongestCard, trump) > 0)
+                strongestCard = card;
+        }
+
+        return strongestCard;
     }
 
     @Override
     public String toString() {
         return name;
     }
+
 }
 
